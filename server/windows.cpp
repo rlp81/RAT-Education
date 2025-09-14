@@ -130,6 +130,7 @@ public:
             }
             else {
                 printf("\nsend failed with error: %d\n", WSAGetLastError());
+                quit = true;
                 closesocket(ClientSocket);
                 WSACleanup();
                 return 1;
@@ -148,7 +149,7 @@ public:
                 printf("\nrecv failed with error: %d\n", WSAGetLastError());
                 closesocket(ClientSocket);
                 WSACleanup();
-                //quit = true;
+                quit = true;
                 return 1;
             }
         }
@@ -238,7 +239,8 @@ public:
 
 
             SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
-
+            SOCKADDR_IN addr;
+            int addrlen = sizeof(addr);
             if (ClientSocket == INVALID_SOCKET) {
                 if (WSAGetLastError() != 10004) {
                     printf("accept failed with error: %d\n", WSAGetLastError());
@@ -247,8 +249,13 @@ public:
                     return 1;
                 }
             }
-            srand(time(0));
-            string cliname = "client-" + to_string(rand() % 124);
+            //srand(time(0));
+            string cIP;
+            //cIP = to_string(rand());
+            char* ip = inet_ntoa(addr.sin_addr);
+            cIP = ip;
+            string cliname = "client_" + cIP;
+
             clientSocket.clientName = cliname;
             clientSocket.ClientSocket = move(ClientSocket);
             currentSockets[cliname] = move(clientSocket);
